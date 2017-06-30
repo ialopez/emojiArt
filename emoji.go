@@ -9,7 +9,7 @@ import (
 	"os"
 )
 
-var emojiList [2661]Emoji
+var emojiList [2661]Emoji //for now we hard code this value
 var numOfEmojisForResult = 30
 var inputRatio = 0
 var outputRatio = 0
@@ -18,11 +18,13 @@ var currentSquare image.Point
 var resultHeight int
 var resultWidth int
 
+//emoji png files are saved internally in the program as 72x72 arrays of colors, also the path of the emoji is saved
 type Emoji struct {
 	path       string
 	vectorForm [72][72]color.Color
 }
 
+//This builds an array of emoji structs that represents every png file in the 72x72 directory
 func initEmojiDict() {
 	file, err := os.Open("./72x72")
 	if err != nil {
@@ -66,42 +68,14 @@ func initEmojiDict() {
 			}
 		}
 	}
+	fmt.Println("emoji dict initialized")
 }
 
-//test code for creating a new image
-func testImageDraw() {
-	height := 256
-	width := 256
-
-	img := image.NewRGBA(image.Rect(0, 0, width, height))
-
-	for y := 0; y < height; y++ {
-		for x := 0; x < width; x++ {
-			img.Set(x, y, color.NRGBA{
-				R: uint8((x + y) & 255),
-				G: uint8((x + y) << 1 & 255),
-				B: uint8((x + y) << 2 & 255),
-				A: 255,
-			})
-		}
-	}
-
-	f, err := os.Create("./image.png")
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	if err := png.Encode(f, img); err != nil {
-		f.Close()
-		fmt.Println(err)
-	}
-
-	if err := f.Close(); err != nil {
-		fmt.Println(err)
-	}
-}
-
-func drawSubregion(img *image.RGBA, emojiIndex int) {
+/*this function draws out the specified emoji onto the output image
+emojiIndex: the index of a emoji in emojiDict
+img: the image to draw onto
+*/
+func drawEmoji(img *image.RGBA, emojiIndex int) {
 	for x := 0; x < 72; x++ {
 		for y := 0; y < 72; y++ {
 			img.Set(x+currentSquare.X, y+currentSquare.Y, emojiList[emojiIndex].vectorForm[x][y])
@@ -130,6 +104,11 @@ func testDrawSubregion(img *image.RGBA, subsection [][]color.Color) {
 }
 
 //test this
+/*finds the average rgb value of a specified sub square of the image
+subsection: an image
+x, y: these compose the upperLeft corner of the square region the function finds the average rgb value of
+squareSize: the size of the square region
+*/
 func averageRGBSlice(subsection [][]color.Color, x int, y int, squareSize int) (r, g, b float64) {
 	r0, g0, b0 := uint32(0), uint32(0), uint32(0)
 	count := 0
@@ -153,6 +132,8 @@ func averageRGBSlice(subsection [][]color.Color, x int, y int, squareSize int) (
 }
 
 //test this
+/*same as above function but takes arrays as input instead of slices, see averageRGBSlice
+ */
 func averageRGBArray(subsection [72][72]color.Color, x int, y int, squareSize int) (r, g, b float64) {
 	r0, g0, b0 := uint32(0), uint32(0), uint32(0)
 	count := 0
@@ -175,6 +156,8 @@ func averageRGBArray(subsection [72][72]color.Color, x int, y int, squareSize in
 	return
 }
 
+/*TODO
+ */
 func nearestEmoji(subsection [][]color.Color, squareSize int) int {
 	var smallestDistance float64
 	var nearestIndex int
@@ -239,6 +222,8 @@ func nearestEmoji(subsection [][]color.Color, squareSize int) int {
 	return nearestIndex
 }
 
+/*not sure if necessary anymore still debating on some details of final algo
+ */
 func findRatio(a, b int) (x, y int) {
 	//find gcd
 	temp0 := a
@@ -300,9 +285,7 @@ func createEmojiArt(img image.Image) {
 				}
 			}
 			closestEmoji := nearestEmoji(subsection, squareSize)
-			drawSubregion(resultImg, closestEmoji)
-			//test code
-			//testDrawSubregion(resultImg, subsection, upperLeftSource)
+			drawEmoji(resultImg, closestEmoji)
 		}
 	}
 

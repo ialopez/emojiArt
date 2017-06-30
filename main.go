@@ -55,7 +55,6 @@ func resultHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	initEmojiDict()
-	fmt.Println("emoji dict initialized")
 	http.HandleFunc("/", mainHandler)
 	http.HandleFunc("/view/", resultHandler)
 	http.ListenAndServe(":8080", nil)

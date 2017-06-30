@@ -66,8 +66,7 @@ func simpleAlgo(img image.Image) {
 				}
 			}
 			closestEmoji := nearestSimple(subsection, squareSize)
-			drawSubregion(resultImg, closestEmoji)
-			//testDrawSubregion(resultImg, subsection)
+			drawEmoji(resultImg, closestEmoji)
 		}
 		fmt.Print(upperLeft.X)
 		fmt.Print("out of ")
