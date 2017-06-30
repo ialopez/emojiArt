@@ -55,6 +55,7 @@ func resultHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	initEmojiDict()
+	initEmojiDictAvg()
 	http.HandleFunc("/", mainHandler)
 	http.HandleFunc("/view/", resultHandler)
 	http.ListenAndServe(":8080", nil)

@@ -9,6 +9,18 @@ import (
 	"os"
 )
 
+var emojiListAvg [2661][3]float64
+
+func initEmojiDictAvg() {
+	for i := 0; i < len(emojiList); i++ {
+		r, g, b := averageRGBArray(emojiList[i].vectorForm, 0, 0, 72)
+		emojiListAvg[i][0] = r
+		emojiListAvg[i][1] = g
+		emojiListAvg[i][2] = b
+	}
+	fmt.Println("average emoji dict initialized")
+}
+
 //test this
 func nearestSimple(subsection [][]color.Color, squareSize int) int {
 
@@ -18,14 +30,14 @@ func nearestSimple(subsection [][]color.Color, squareSize int) int {
 
 	//set smallest distance to first emoji
 	r0, g0, b0 := averageRGBSlice(subsection, 0, 0, squareSize)
-	r1, g1, b1 := averageRGBArray(emojiList[0].vectorForm, 0, 0, 72)
+	r1, g1, b1 := emojiListAvg[0][0], emojiListAvg[0][1], emojiListAvg[0][2]
 
 	//use sum of square differences
 	smallestDistance += math.Pow(r0-r1, 2) + math.Pow(g0-g1, 2) + math.Pow(b0-b1, 2)
 	nearestIndex = 0
 
 	for i := 1; i < len(emojiList); i++ {
-		r1, g1, b1 := averageRGBArray(emojiList[i].vectorForm, 0, 0, 72)
+		r1, g1, b1 := emojiListAvg[i][0], emojiListAvg[i][1], emojiListAvg[i][2]
 		distance = math.Pow(r0-r1, 2) + math.Pow(g0-g1, 2) + math.Pow(b0-b1, 2)
 		if distance < smallestDistance {
 			smallestDistance = distance
@@ -73,6 +85,7 @@ func simpleAlgo(img image.Image) {
 		fmt.Println(img.Bounds().Max.X)
 	}
 
+	fmt.Println("drawing image")
 	f, err := os.Create("./image.png")
 	if err != nil {
 		fmt.Println(err)
@@ -87,6 +100,6 @@ func simpleAlgo(img image.Image) {
 		fmt.Println(err)
 	}
 
-	fmt.Print("finished")
+	fmt.Println("finished")
 
 }
