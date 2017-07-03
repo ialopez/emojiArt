@@ -31,6 +31,7 @@ func nearestSimple(subsection [][]color.Color, squareSize int) int {
 	//set smallest distance to first emoji
 	r0, g0, b0 := averageRGBSlice(subsection, 0, 0, squareSize)
 	r1, g1, b1 := emojiListAvg[0][0], emojiListAvg[0][1], emojiListAvg[0][2]
+	//r1, g1, b1 := averageRGBArray(emojiList[0].vectorForm, 0, 0, 72)
 
 	//use sum of square differences
 	smallestDistance += math.Pow(r0-r1, 2) + math.Pow(g0-g1, 2) + math.Pow(b0-b1, 2)
@@ -38,6 +39,7 @@ func nearestSimple(subsection [][]color.Color, squareSize int) int {
 
 	for i := 1; i < len(emojiList); i++ {
 		r1, g1, b1 := emojiListAvg[i][0], emojiListAvg[i][1], emojiListAvg[i][2]
+		//r1, g1, b1 := averageRGBArray(emojiList[i].vectorForm, 0, 0, 72)
 		distance = math.Pow(r0-r1, 2) + math.Pow(g0-g1, 2) + math.Pow(b0-b1, 2)
 		if distance < smallestDistance {
 			smallestDistance = distance
@@ -50,8 +52,9 @@ func nearestSimple(subsection [][]color.Color, squareSize int) int {
 
 func simpleAlgo(img image.Image) {
 	//hardcode square size for now
-	fmt.Println("entered simple algo")
-	squareSize := 20
+	fmt.Println("enter square size")
+	var squareSize int
+	fmt.Scanf("%d\n", &squareSize)
 
 	imgWidth := img.Bounds().Max.X - img.Bounds().Min.X
 	imgHeight := img.Bounds().Max.Y - img.Bounds().Min.X
