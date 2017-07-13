@@ -5,18 +5,28 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"log"
 	"math"
 	"os"
 )
 
-var emojiListAvg [2661][3]float64
+/*this dictionary holds the precomputed average RGB values of Emojis
+it is a map that takes in the platform as a key ie.. "apple" "facebook" and returns a [][3] slice of floats
+where [][0] is red [][1] is green and [][2] is blue
+*/
+var emojiDictAvg map[string][][3]float64
+var currentPlatform string
 
 func initEmojiDictAvg() {
-	for i := 0; i < len(emojiList); i++ {
-		r, g, b := averageRGBArray(emojiList[i].vectorForm, 0, 0, 72)
-		emojiListAvg[i][0] = r
-		emojiListAvg[i][1] = g
-		emojiListAvg[i][2] = b
+	emojiDictAvg = make(map[string][][3]float64)
+	for i := 0; i < len(platforms); i++ {
+		emojiDictAvg[platforms[i]] = make([][3]float64, len(emojiDict[platforms[i]]))
+		for j := 0; j < len(emojiDict[platforms[i]]); j++ {
+			r, g, b := averageRGBArray(emojiDict[platforms[i]][j].vectorForm, 0, 0, 64)
+			emojiDictAvg[platforms[i]][j][0] = r
+			emojiDictAvg[platforms[i]][j][1] = g
+			emojiDictAvg[platforms[i]][j][2] = b
+		}
 	}
 	fmt.Println("average emoji dict initialized")
 }
@@ -30,16 +40,16 @@ func nearestSimple(subsection [][]color.Color, squareSize int) int {
 
 	//set smallest distance to first emoji
 	r0, g0, b0 := averageRGBSlice(subsection, 0, 0, squareSize)
-	r1, g1, b1 := emojiListAvg[0][0], emojiListAvg[0][1], emojiListAvg[0][2]
-	//r1, g1, b1 := averageRGBArray(emojiList[0].vectorForm, 0, 0, 72)
+	r1, g1, b1 := emojiDictAvg[currentPlatform][0][0], emojiDictAvg[currentPlatform][0][1], emojiDictAvg[currentPlatform][0][2]
+	//r1, g1, b1 := averageRGBArray(emojiDict[0].vectorForm, 0, 0, 64)
 
 	//use sum of square differences
 	smallestDistance += math.Pow(r0-r1, 2) + math.Pow(g0-g1, 2) + math.Pow(b0-b1, 2)
 	nearestIndex = 0
 
-	for i := 1; i < len(emojiList); i++ {
-		r1, g1, b1 := emojiListAvg[i][0], emojiListAvg[i][1], emojiListAvg[i][2]
-		//r1, g1, b1 := averageRGBArray(emojiList[i].vectorForm, 0, 0, 72)
+	for i := 1; i < len(emojiDictAvg); i++ {
+		r1, g1, b1 := emojiDictAvg[currentPlatform][i][0], emojiDictAvg[currentPlatform][i][1], emojiDictAvg[currentPlatform][i][2]
+		//r1, g1, b1 := averageRGBArray(emojiDict[i].vectorForm, 0, 0, 64)
 		distance = math.Pow(r0-r1, 2) + math.Pow(g0-g1, 2) + math.Pow(b0-b1, 2)
 		if distance < smallestDistance {
 			smallestDistance = distance
@@ -50,17 +60,21 @@ func nearestSimple(subsection [][]color.Color, squareSize int) int {
 	return nearestIndex
 }
 
-func simpleAlgo(img image.Image) {
+func simpleAlgo(img image.Image) image.Image {
 	//hardcode square size for now
-	fmt.Println("enter square size")
+	/*fmt.Println("enter square size")
 	var squareSize int
 	fmt.Scanf("%d\n", &squareSize)
+	*/
+
+	//debugging purposes
+	squareSize := 15
 
 	imgWidth := img.Bounds().Max.X - img.Bounds().Min.X
 	imgHeight := img.Bounds().Max.Y - img.Bounds().Min.X
 
-	resultWidth = 72 * imgWidth / squareSize
-	resultHeight = 72 * imgHeight / squareSize
+	resultWidth = 64 * imgWidth / squareSize
+	resultHeight = 64 * imgHeight / squareSize
 	var resultImg *image.RGBA = image.NewRGBA(image.Rect(0, 0, resultWidth, resultHeight))
 
 	//create 2d slice
@@ -91,18 +105,20 @@ func simpleAlgo(img image.Image) {
 	fmt.Println("drawing image")
 	f, err := os.Create("./image.png")
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 	}
 
 	if err := png.Encode(f, resultImg); err != nil {
 		f.Close()
-		fmt.Println(err)
+		log.Fatal(err)
 	}
 
 	if err := f.Close(); err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 	}
 
 	fmt.Println("finished")
+
+	return resultImg
 
 }

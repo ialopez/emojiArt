@@ -5,11 +5,16 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"log"
 	"math"
 	"os"
 )
 
-var emojiList [2661]Emoji //for now we hard code this value
+/*this is a map that contains array of emoji structs
+each key is the platform the emojis belong to ie. apple, facebook
+*/
+var emojiDict map[string][]Emoji
+var platforms = [6]string{"apple", "emojione", "facebook", "facebook-messenger", "google", "twitter"}
 var numOfEmojisForResult = 30
 var inputRatio = 0
 var outputRatio = 0
@@ -18,54 +23,63 @@ var currentSquare image.Point
 var resultHeight int
 var resultWidth int
 
-//emoji png files are saved internally in the program as 72x72 arrays of colors, also the path of the emoji is saved
+//emoji png files are saved internally in the program as 64x64 arrays of colors, also the path of the emoji is saved
 type Emoji struct {
 	path       string
-	vectorForm [72][72]color.Color
+	vectorForm [64][64]color.Color
 }
 
-//This builds an array of emoji structs that represents every png file in the 72x72 directory
+//This builds an array of emoji structs that represents every png file in the 64x64 directory
 func initEmojiDict() {
-	file, err := os.Open("./72x72")
-	if err != nil {
-		fmt.Println(err)
-	}
-	//read up to 3000 png files from the directory "72x72"
-	names, err := file.Readdirnames(3000)
-	if err != nil {
-		fmt.Println(err)
-	}
+	emojiDict = make(map[string][]Emoji)
 
-	for i := 0; i < len(names); i++ {
-		file, err := os.Open("./72x72/" + names[i])
+	for i := 0; i < len(platforms); i++ {
+		currentDir := "./" + platforms[i] + "/"
+		folder, err := os.Open(currentDir)
 		if err != nil {
-			fmt.Println(err)
+			log.Fatal(err)
+		}
+		defer folder.Close()
+
+		//read up to 3000 png files from the directory "64x64"
+		names, err := folder.Readdirnames(3000)
+		if err != nil {
+			log.Fatal(err)
 		}
 
-		img, err := png.Decode(file)
-		if err != nil {
-			fmt.Println(err)
-		}
-		emojiList[i].path = "./72x72/" + names[i]
+		emojiDict[platforms[i]] = make([]Emoji, len(names))
 
-		size := img.Bounds()
+		for j := 0; j < len(names); j++ {
+			file, err := os.Open(currentDir + names[j])
+			if err != nil {
+				log.Fatal(err)
+			}
+			img, err := png.Decode(file)
+			if err != nil {
+				log.Fatal(err)
+			}
+			emojiDict[platforms[i]][j].path = currentDir + names[j]
 
-		whiteColor := color.NRGBA{R: uint8(255), G: uint8(255), B: uint8(255), A: uint8(255)}
+			size := img.Bounds()
 
-		//store vector form for emojis
-		for x := size.Min.X; x < size.Max.X; x++ {
-			for y := size.Min.Y; y < size.Max.Y; y++ {
-				//check if pixel is transparent if it is set it to white
-				//pixel := img.At(x, y)
-				//_, _, _, a := pixel.RGBA()
-				//debug
-				if 1 == 0 {
-					//if color is transparent set color to white
-					emojiList[i].vectorForm[x][y] = whiteColor
-				} else {
-					emojiList[i].vectorForm[x][y] = img.At(x, y)
+			whiteColor := color.NRGBA{R: uint8(255), G: uint8(255), B: uint8(255), A: uint8(255)}
+
+			//store vector form for emojis
+			for x := size.Min.X; x < size.Max.X; x++ {
+				for y := size.Min.Y; y < size.Max.Y; y++ {
+					//check if pixel is transparent if it is set it to white
+					//pixel := img.At(x, y)
+					//_, _, _, a := pixel.RGBA()
+					//debug
+					if 1 == 0 {
+						//if color is transparent set color to white
+						emojiDict[platforms[i]][j].vectorForm[x][y] = whiteColor
+					} else {
+						emojiDict[platforms[i]][j].vectorForm[x][y] = img.At(x, y)
+					}
 				}
 			}
+			file.Close()
 		}
 	}
 	fmt.Println("emoji dict initialized")
@@ -76,30 +90,30 @@ emojiIndex: the index of a emoji in emojiDict
 img: the image to draw onto
 */
 func drawEmoji(img *image.RGBA, emojiIndex int) {
-	for x := 0; x < 72; x++ {
-		for y := 0; y < 72; y++ {
-			img.Set(x+currentSquare.X, y+currentSquare.Y, emojiList[emojiIndex].vectorForm[x][y])
+	for x := 0; x < 64; x++ {
+		for y := 0; y < 64; y++ {
+			img.Set(x+currentSquare.X, y+currentSquare.Y, emojiDict["apple"][emojiIndex].vectorForm[x][y])
 		}
 	}
-	if currentSquare.Y+72 < resultHeight {
-		currentSquare.Y += 72
+	if currentSquare.Y+64 < resultHeight {
+		currentSquare.Y += 64
 	} else {
 		currentSquare.Y = 0
-		currentSquare.X += 72
+		currentSquare.X += 64
 	}
 }
 
 func testDrawSubregion(img *image.RGBA, subsection [][]color.Color) {
-	for x := 0; x < 72; x++ {
-		for y := 0; y < 72; y++ {
+	for x := 0; x < 64; x++ {
+		for y := 0; y < 64; y++ {
 			img.Set(x+currentSquare.X, y+currentSquare.Y, subsection[x][y])
 		}
 	}
-	if currentSquare.Y+72 < resultHeight {
-		currentSquare.Y += 72
+	if currentSquare.Y+64 < resultHeight {
+		currentSquare.Y += 64
 	} else {
 		currentSquare.Y = 0
-		currentSquare.X += 72
+		currentSquare.X += 64
 	}
 }
 
@@ -134,11 +148,14 @@ func averageRGBSlice(subsection [][]color.Color, x int, y int, squareSize int) (
 //test this
 /*same as above function but takes arrays as input instead of slices, see averageRGBSlice
  */
-func averageRGBArray(subsection [72][72]color.Color, x int, y int, squareSize int) (r, g, b float64) {
+func averageRGBArray(subsection [64][64]color.Color, x int, y int, squareSize int) (r, g, b float64) {
 	r0, g0, b0 := uint32(0), uint32(0), uint32(0)
 	count := 0
 	for i := x; i < x+squareSize; i++ {
 		for j := y; j < y+squareSize; j++ {
+			if subsection[i][j] == nil {
+				fmt.Println("null color")
+			}
 			r1, g1, b1, a := subsection[i][j].RGBA()
 			if a != 0 {
 				r0, g0, b0 = r0+r1, g0+g1, b0+b1
@@ -164,10 +181,10 @@ func nearestEmoji(subsection [][]color.Color, squareSize int) int {
 	var distance float64
 
 	//set smallest distance to first emoji
-	for eX, sX := 0, 0; eX < len(emojiList[0].vectorForm); eX, sX = eX+outputRatio, sX+inputRatio {
-		for eY, sY := 0, 0; eY < len(emojiList[0].vectorForm[eX]); eY, sY = eY+outputRatio, sY+inputRatio {
+	for eX, sX := 0, 0; eX < len(emojiDict["apple"][0].vectorForm); eX, sX = eX+outputRatio, sX+inputRatio {
+		for eY, sY := 0, 0; eY < len(emojiDict["apple"][0].vectorForm[eX]); eY, sY = eY+outputRatio, sY+inputRatio {
 			r0, g0, b0 := averageRGBSlice(subsection, sX, sY, inputRatio)
-			r1, g1, b1 := averageRGBArray(emojiList[0].vectorForm, eX, eY, outputRatio)
+			r1, g1, b1 := averageRGBArray(emojiDict["apple"][0].vectorForm, eX, eY, outputRatio)
 			//use sum of square differences
 			distance += math.Pow(r0-r1, 2) + math.Pow(g0-g1, 2) + math.Pow(b0-b1, 2)
 		}
@@ -175,12 +192,12 @@ func nearestEmoji(subsection [][]color.Color, squareSize int) int {
 	smallestDistance = distance
 	nearestIndex = 0
 
-	for i := 1; i < len(emojiList); i++ {
+	for i := 1; i < len(emojiDict); i++ {
 		distance = 0
-		for eX, sX := 0, 0; eX < len(emojiList[0].vectorForm); eX, sX = eX+outputRatio, sX+inputRatio {
-			for eY, sY := 0, 0; eY < len(emojiList[0].vectorForm[eX]); eY, sY = eY+outputRatio, sY+inputRatio {
+		for eX, sX := 0, 0; eX < len(emojiDict["apple"][0].vectorForm); eX, sX = eX+outputRatio, sX+inputRatio {
+			for eY, sY := 0, 0; eY < len(emojiDict["apple"][0].vectorForm[eX]); eY, sY = eY+outputRatio, sY+inputRatio {
 				r0, g0, b0 := averageRGBSlice(subsection, sX, sY, inputRatio)
-				r1, g1, b1 := averageRGBArray(emojiList[i].vectorForm, eX, eY, outputRatio)
+				r1, g1, b1 := averageRGBArray(emojiDict["apple"][i].vectorForm, eX, eY, outputRatio)
 				//use sum of square differences
 				distance += math.Pow(r0-r1, 2) + math.Pow(g0-g1, 2) + math.Pow(b0-b1, 2)
 			}
@@ -192,10 +209,10 @@ func nearestEmoji(subsection [][]color.Color, squareSize int) int {
 	}
 	/*
 	   //set smallest distance to first emoji
-	   for x := 0; x < len(emojiList[0].vectorForm); x++ {
-	       for y := 0; y < len(emojiList[0].vectorForm[x]); y++ {
+	   for x := 0; x < len(emojiDict[0].vectorForm); x++ {
+	       for y := 0; y < len(emojiDict[0].vectorForm[x]); y++ {
 	           r0, g0, b0, a0 := subsection[x][y].RGBA()
-	           r1, g1, b1, a1 := emojiList[0].vectorForm[x][y].RGBA()
+	           r1, g1, b1, a1 := emojiDict[0].vectorForm[x][y].RGBA()
 	           //use sum of square differences
 	           distance += math.Pow((r0-r1)**, 2)2 + math.Pow((g0-g1)**, 2)2 + math.Pow((b0-b1)**, 2)2 + math.Pow((a0-a1)**, 2)2
 	       }
@@ -203,12 +220,12 @@ func nearestEmoji(subsection [][]color.Color, squareSize int) int {
 	   smallestDistance = distance
 	   nearestIndex = 0
 
-	   for i := 1; i < len(emojiList); i++ {
+	   for i := 1; i < len(emojiDict); i++ {
 	       distance = 0
-	       for x := 0; x < len(emojiList[i].vectorForm); x++ {
-	           for y := 0; y < len(emojiList[i].vectorForm[x]); y++ {
+	       for x := 0; x < len(emojiDict[i].vectorForm); x++ {
+	           for y := 0; y < len(emojiDict[i].vectorForm[x]); y++ {
 	               r0, g0, b0, a0 := subsection[x][y].RGBA()
-	               r1, g1, b1, a1 := emojiList[i].vectorForm[x][y].RGBA()
+	               r1, g1, b1, a1 := emojiDict[i].vectorForm[x][y].RGBA()
 	               //use sum of square differencet
 	               distance += math.Pow((r0-r1)**, 2)2 + math.Pow((g0-g1)**, 2)2 + math.Pow((b0-b1)**, 2)2 + math.Pow((a0-a1)**, 2)2
 	           }
@@ -250,12 +267,12 @@ func createEmojiArt(img image.Image) {
 
 	//hard code for now, square size is 15 pixels long
 	squareSize := (size.Max.X - size.Min.X) / numOfEmojisForResult
-	inputRatio, outputRatio = findRatio(squareSize, 72)
+	inputRatio, outputRatio = findRatio(squareSize, 64)
 
-	resultWidth := 72 * numOfEmojisForResult
-	resultHeight := 72 * (size.Max.Y - size.Min.Y) / squareSize
+	resultWidth := 64 * numOfEmojisForResult
+	resultHeight := 64 * (size.Max.Y - size.Min.Y) / squareSize
 	if (size.Max.Y-size.Min.Y)%squareSize != 0 {
-		resultWidth += 72
+		resultWidth += 64
 	}
 	var resultImg *image.RGBA = image.NewRGBA(image.Rect(0, 0, resultWidth, resultHeight))
 
@@ -291,16 +308,16 @@ func createEmojiArt(img image.Image) {
 
 	f, err := os.Create("./image.png")
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 	}
 
 	if err := png.Encode(f, resultImg); err != nil {
 		f.Close()
-		fmt.Println(err)
+		log.Fatal(err)
 	}
 
 	if err := f.Close(); err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 	}
 
 	fmt.Println("total distance is ", totalDistance)
