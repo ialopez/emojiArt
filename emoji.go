@@ -15,6 +15,10 @@ each key is the platform the emojis belong to ie. apple, facebook
 */
 var emojiDict map[string][]Emoji
 var platforms = [6]string{"apple", "emojione", "facebook", "facebook-messenger", "google", "twitter"}
+var currentPlatform string
+
+const emojiSize = 64
+
 var numOfEmojisForResult = 30
 var inputRatio = 0
 var outputRatio = 0
@@ -26,7 +30,7 @@ var resultWidth int
 //emoji png files are saved internally in the program as 64x64 arrays of colors, also the path of the emoji is saved
 type Emoji struct {
 	path       string
-	vectorForm [64][64]color.Color
+	vectorForm [emojiSize][emojiSize]color.Color
 }
 
 //This builds an array of emoji structs that represents every png file in the 64x64 directory
@@ -90,30 +94,30 @@ emojiIndex: the index of a emoji in emojiDict
 img: the image to draw onto
 */
 func drawEmoji(img *image.RGBA, emojiIndex int) {
-	for x := 0; x < 64; x++ {
-		for y := 0; y < 64; y++ {
-			img.Set(x+currentSquare.X, y+currentSquare.Y, emojiDict["apple"][emojiIndex].vectorForm[x][y])
+	for x := 0; x < emojiSize; x++ {
+		for y := 0; y < emojiSize; y++ {
+			img.Set(x+currentSquare.X, y+currentSquare.Y, emojiDict[currentPlatform][emojiIndex].vectorForm[x][y])
 		}
 	}
-	if currentSquare.Y+64 < resultHeight {
-		currentSquare.Y += 64
+	if currentSquare.Y+emojiSize < resultHeight {
+		currentSquare.Y += emojiSize
 	} else {
 		currentSquare.Y = 0
-		currentSquare.X += 64
+		currentSquare.X += emojiSize
 	}
 }
 
 func testDrawSubregion(img *image.RGBA, subsection [][]color.Color) {
-	for x := 0; x < 64; x++ {
-		for y := 0; y < 64; y++ {
+	for x := 0; x < emojiSize; x++ {
+		for y := 0; y < emojiSize; y++ {
 			img.Set(x+currentSquare.X, y+currentSquare.Y, subsection[x][y])
 		}
 	}
-	if currentSquare.Y+64 < resultHeight {
-		currentSquare.Y += 64
+	if currentSquare.Y+emojiSize < resultHeight {
+		currentSquare.Y += emojiSize
 	} else {
 		currentSquare.Y = 0
-		currentSquare.X += 64
+		currentSquare.X += emojiSize
 	}
 }
 
@@ -267,12 +271,12 @@ func createEmojiArt(img image.Image) {
 
 	//hard code for now, square size is 15 pixels long
 	squareSize := (size.Max.X - size.Min.X) / numOfEmojisForResult
-	inputRatio, outputRatio = findRatio(squareSize, 64)
+	inputRatio, outputRatio = findRatio(squareSize, emojiSize)
 
-	resultWidth := 64 * numOfEmojisForResult
-	resultHeight := 64 * (size.Max.Y - size.Min.Y) / squareSize
+	resultWidth := emojiSize * numOfEmojisForResult
+	resultHeight := emojiSize * (size.Max.Y - size.Min.Y) / squareSize
 	if (size.Max.Y-size.Min.Y)%squareSize != 0 {
-		resultWidth += 64
+		resultWidth += emojiSize
 	}
 	var resultImg *image.RGBA = image.NewRGBA(image.Rect(0, 0, resultWidth, resultHeight))
 

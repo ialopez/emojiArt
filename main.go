@@ -12,6 +12,7 @@ import (
 	"log"
 	"net/http" //used to handle serve http requests
 	"os"       //used to create files in server
+	"strconv"
 )
 
 var mainPage, _ = ioutil.ReadFile("main.html") //read in main page from main.html
@@ -38,9 +39,13 @@ func mainHandler(w http.ResponseWriter, r *http.Request) {
 
 //serve result page, seen after submitting picture to server
 func resultHandler(w http.ResponseWriter, r *http.Request) {
-	title := r.URL.Path[len("/view/"):]
 	r.ParseMultipartForm(32 << 20)
 	file, handler, err := r.FormFile("pic")
+	temp := r.FormValue("squareSize")
+	squareSize, err = strconv.Atoi(temp)
+	if err != nil {
+		log.Fatal(err)
+	}
 	currentPlatform = r.FormValue("platform")
 	if err != nil {
 		log.Fatal(err)
@@ -60,6 +65,7 @@ func resultHandler(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
+	title := handler.Filename
 	str := base64.StdEncoding.EncodeToString(buffer.Bytes())
 	data := map[string]string{"Image": str, "Title": title}
 	err = resultPage.Execute(w, data)
@@ -69,7 +75,7 @@ func resultHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	currentPlatform = "twitter"
+	currentPlatform = "apple"
 
 	initEmojiDict()
 	initEmojiDictAvg()

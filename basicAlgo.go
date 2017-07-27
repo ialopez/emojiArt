@@ -15,7 +15,7 @@ it is a map that takes in the platform as a key ie.. "apple" "facebook" and retu
 where [][0] is red [][1] is green and [][2] is blue
 */
 var emojiDictAvg map[string][][3]float64
-var currentPlatform string
+var squareSize int
 
 func initEmojiDictAvg() {
 	emojiDictAvg = make(map[string][][3]float64)
@@ -44,10 +44,10 @@ func nearestSimple(subsection [][]color.Color, squareSize int) int {
 	//r1, g1, b1 := averageRGBArray(emojiDict[0].vectorForm, 0, 0, 64)
 
 	//use sum of square differences
-	smallestDistance += math.Pow(r0-r1, 2) + math.Pow(g0-g1, 2) + math.Pow(b0-b1, 2)
+	smallestDistance = math.Pow(r0-r1, 2) + math.Pow(g0-g1, 2) + math.Pow(b0-b1, 2)
 	nearestIndex = 0
 
-	for i := 1; i < len(emojiDictAvg); i++ {
+	for i := 1; i < len(emojiDictAvg[currentPlatform]); i++ {
 		r1, g1, b1 := emojiDictAvg[currentPlatform][i][0], emojiDictAvg[currentPlatform][i][1], emojiDictAvg[currentPlatform][i][2]
 		//r1, g1, b1 := averageRGBArray(emojiDict[i].vectorForm, 0, 0, 64)
 		distance = math.Pow(r0-r1, 2) + math.Pow(g0-g1, 2) + math.Pow(b0-b1, 2)
@@ -67,14 +67,11 @@ func simpleAlgo(img image.Image) image.Image {
 	fmt.Scanf("%d\n", &squareSize)
 	*/
 
-	//debugging purposes
-	squareSize := 15
-
 	imgWidth := img.Bounds().Max.X - img.Bounds().Min.X
 	imgHeight := img.Bounds().Max.Y - img.Bounds().Min.X
 
-	resultWidth = 64 * imgWidth / squareSize
-	resultHeight = 64 * imgHeight / squareSize
+	resultWidth = emojiSize * imgWidth / squareSize
+	resultHeight = emojiSize * imgHeight / squareSize
 	var resultImg *image.RGBA = image.NewRGBA(image.Rect(0, 0, resultWidth, resultHeight))
 
 	//create 2d slice
