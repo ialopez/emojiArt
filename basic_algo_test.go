@@ -1,4 +1,4 @@
-package main
+package emojiArt
 
 import "testing"
 import "os"
