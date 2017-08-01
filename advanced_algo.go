@@ -1,4 +1,4 @@
-package emojiArt
+package emojiart
 
 import "image"
 import "image/color"

@@ -1,4 +1,4 @@
-package emojiArt
+package emojiart
 
 import (
 	"fmt"
@@ -48,7 +48,7 @@ func InitEmojiDict() {
 	emojiDict = make(map[string][]emoji)
 
 	for i := 0; i < len(platforms); i++ {
-		currentDir := "../emojiArt/" + platforms[i] + "/"
+		currentDir := "../emojiart/" + platforms[i] + "/"
 		folder, err := os.Open(currentDir)
 		if err != nil {
 			log.Fatal(err)
