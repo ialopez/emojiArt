@@ -33,6 +33,11 @@ type picToEmoji struct {
 	currentSquare                         image.Point
 }
 
+type emojiMap struct {
+	Dictionary map[string]string
+	Mapping    [][]int
+}
+
 func NewPicToEmoji(squareSize int, outputPlatform string, useAdvancedAlgo bool, inputImage image.Image) *picToEmoji {
 	p := new(picToEmoji)
 	p.squareSize = squareSize
@@ -41,6 +46,16 @@ func NewPicToEmoji(squareSize int, outputPlatform string, useAdvancedAlgo bool, 
 	p.inputImage = inputImage
 	p.currentSquare = image.Point{X: 0, Y: 0}
 	return p
+}
+
+func newEmojiMap(width, height int) *emojiMap {
+	e := new(emojiMap)
+	e.Dictionary = make(map[string]string)
+	e.Mapping = make([][]int, width)
+	for i := 0; i < width; i++ {
+		e.Mapping[i] = make([]int, height)
+	}
+	return e
 }
 
 //This builds an array of emoji structs that represents every png file in the 64x64 directory
@@ -202,4 +217,8 @@ func (p picToEmoji) CreateEmojiArt() image.Image {
 	} else {
 		return p.basicAlgo()
 	}
+}
+
+func (p picToEmoji) CreateEmojiArtMap() *emojiMap {
+	return p.basicAlgoGenMap()
 }

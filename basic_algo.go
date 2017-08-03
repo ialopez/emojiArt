@@ -8,9 +8,10 @@ import (
 	"log"
 	"math"
 	"os"
+	"strconv"
 )
 
-/*this dictionary holds the precomputed average RGB values of Emojis
+/*this Dictionary holds the precomputed average RGB values of Emojis
 it is a map that takes in the platform as a key ie.. "apple" "facebook" and returns a [][3] slice of floats
 where [][0] is red [][1] is green and [][2] is blue
 */
@@ -58,6 +59,8 @@ func (p picToEmoji) nearestSimple(subsection [][]color.Color) int {
 	return nearestIndex
 }
 
+/*returns an emojiArt Image of the input image field contained in the picToEmoji struct
+ */
 func (p picToEmoji) basicAlgo() image.Image {
 	//hardcode square size for now
 	/*fmt.Println("enter square size")
@@ -113,4 +116,51 @@ func (p picToEmoji) basicAlgo() image.Image {
 
 	return p.outputImage
 
+}
+
+/*similar to function above instead returns a struct containing a compressed representation of the emojiArt image
+ */
+func (p picToEmoji) basicAlgoGenMap() *emojiMap {
+	imgWidth := p.inputImage.Bounds().Max.X - p.inputImage.Bounds().Min.X
+	imgHeight := p.inputImage.Bounds().Max.Y - p.inputImage.Bounds().Min.X
+	width := imgWidth / p.squareSize
+	height := imgHeight / p.squareSize
+
+	resultMap := newEmojiMap(width, height)
+
+	//create 2d slice
+	subsection := make([][]color.Color, p.squareSize)
+	for i := 0; i < p.squareSize; i++ {
+		subsection[i] = make([]color.Color, p.squareSize)
+	}
+
+	var upperLeft image.Point
+
+	for upperLeft.X = p.inputImage.Bounds().Min.X; upperLeft.X < p.inputImage.Bounds().Max.X; upperLeft.X += p.squareSize {
+		for upperLeft.Y = p.inputImage.Bounds().Min.Y; upperLeft.Y < p.inputImage.Bounds().Max.Y; upperLeft.Y += p.squareSize {
+			for x := upperLeft.X; x < upperLeft.X+p.squareSize; x++ {
+				for y := upperLeft.Y; y < upperLeft.Y+p.squareSize; y++ {
+					subsection[x%p.squareSize][y%p.squareSize] = p.inputImage.At(x, y)
+				}
+			}
+			closestEmoji := p.nearestSimple(subsection)
+			resultMap.Mapping[upperLeft.X/emojiSize][upperLeft.Y/emojiSize] = closestEmoji
+		}
+		fmt.Print(upperLeft.X)
+		fmt.Print("out of ")
+		fmt.Println(p.inputImage.Bounds().Max.X)
+	}
+
+	for i := 0; i < width; i++ {
+		for j := 0; j < height; j++ {
+			key := strconv.Itoa(resultMap.Mapping[i][j])
+			if _, contains := resultMap.Dictionary[key]; !contains {
+				resultMap.Dictionary[key] = emojiDict[p.outputPlatform][resultMap.Mapping[i][j]].path
+			}
+		}
+	}
+
+	fmt.Println("finished")
+
+	return resultMap
 }
