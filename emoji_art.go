@@ -20,7 +20,7 @@ const emojiSize = 64
 
 //emoji png files are saved internally in the program as 64x64 arrays of colors, also the path of the emoji is saved
 type emoji struct {
-	path       string
+	urlpath    string
 	vectorForm [emojiSize][emojiSize]color.Color
 }
 
@@ -34,8 +34,8 @@ type picToEmoji struct {
 }
 
 type emojiMap struct {
-	Dictionary map[string]string
-	Mapping    [][]int
+	Dictionary map[string]string `json:"dictionary"`
+	Mapping    [][]int           `json:"mapping"`
 }
 
 func NewPicToEmoji(squareSize int, outputPlatform string, useAdvancedAlgo bool, inputImage image.Image) *picToEmoji {
@@ -87,7 +87,7 @@ func InitEmojiDict() {
 			if err != nil {
 				log.Fatal(err)
 			}
-			emojiDict[platforms[i]][j].path = currentDir + names[j]
+			emojiDict[platforms[i]][j].urlpath = "/images/" + platforms[i] + "/" + names[j]
 
 			size := img.Bounds()
 

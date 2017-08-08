@@ -155,7 +155,7 @@ func (p picToEmoji) basicAlgoGenMap() *emojiMap {
 		for j := 0; j < height; j++ {
 			key := strconv.Itoa(resultMap.Mapping[i][j])
 			if _, contains := resultMap.Dictionary[key]; !contains {
-				resultMap.Dictionary[key] = emojiDict[p.outputPlatform][resultMap.Mapping[i][j]].path
+				resultMap.Dictionary[key] = emojiDict[p.outputPlatform][resultMap.Mapping[i][j]].urlpath
 			}
 		}
 	}

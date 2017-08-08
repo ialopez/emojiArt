@@ -35,8 +35,8 @@ func TestNearestSimple(t *testing.T) {
 	}
 	currentPlatform = "apple"
 	closestEmoji := nearestSimple(square, emojiSize)
-	if emojiDict[currentPlatform][closestEmoji].path != "./apple/00a9.png" {
-		t.Errorf("expected %s, instead got %s\n", expectedPath, emojiDict[currentPlatform][closestEmoji].path)
+	if emojiDict[currentPlatform][closestEmoji].urlpath != "./apple/00a9.png" {
+		t.Errorf("expected %s, instead got %s\n", expectedPath, emojiDict[currentPlatform][closestEmoji].urlpath)
 	}
 	for x := 0; x < emojiSize; x++ {
 		for y := 0; y < emojiSize; y++ {

@@ -9,10 +9,10 @@ func TestInitEmojiDict(t *testing.T) {
 	platforms := [6]string{"apple", "emojione", "facebook", "facebook-messenger", "google", "twitter"}
 	for i := 0; i < len(platforms); i++ {
 		for j := 0; j < len(emojiDict[platforms[i]]); j++ {
-			if emojiDict[platforms[i]][j].path == "" {
+			if emojiDict[platforms[i]][j].urlpath == "" {
 				t.Errorf("path string is empty for the emoji index %d from %s\n", j, platforms[i])
 			}
-			file, err := os.Open(emojiDict[platforms[i]][j].path)
+			file, err := os.Open(emojiDict[platforms[i]][j].urlpath)
 			if err != nil {
 				t.Error(err)
 			}
