@@ -132,7 +132,6 @@ func (p *picToEmoji) drawEmoji(emojiIndex int) {
 	}
 }
 
-//test this
 /*finds the average rgb value of a specified sub square of the image
 subsection: an image
 x, y: these compose the upperLeft corner of the square region the function finds the average rgb value of
@@ -160,7 +159,6 @@ func averageRGBSlice(subsection [][]color.Color, x int, y int, squareSize int) (
 	return
 }
 
-//test this
 /*same as above function but takes arrays as input instead of slices, see averageRGBSlice
  */
 func averageRGBArray(subsection [64][64]color.Color, x int, y int, squareSize int) (r, g, b float64) {
@@ -217,6 +215,26 @@ func (p picToEmoji) CreateEmojiArt() image.Image {
 	} else {
 		return p.basicAlgo()
 	}
+}
+
+//debug purposes
+func (p picToEmoji) DrawInputImage() {
+	fmt.Println("drawing image")
+	f, err := os.Create("./image.png")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err := png.Encode(f, p.inputImage); err != nil {
+		f.Close()
+		log.Fatal(err)
+	}
+
+	if err := f.Close(); err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("finished")
 }
 
 func (p picToEmoji) CreateEmojiArtMap() *emojiMap {

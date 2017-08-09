@@ -135,20 +135,30 @@ func (p picToEmoji) basicAlgoGenMap() *emojiMap {
 	}
 
 	var upperLeft image.Point
+	/*
+		fmt.Printf("width is %d, height is %d\n", width, height)
+		fmt.Printf("imgWidth is %d, imgHeight is %d\n", imgWidth, imgHeight)
+		fmt.Print("max x is %d, max y is %d\n", p.inputImage.Bounds().Max.X, p.inputImage.Bounds().Max.Y)
+	*/
 
-	for upperLeft.X = p.inputImage.Bounds().Min.X; upperLeft.X < p.inputImage.Bounds().Max.X; upperLeft.X += p.squareSize {
-		for upperLeft.Y = p.inputImage.Bounds().Min.Y; upperLeft.Y < p.inputImage.Bounds().Max.Y; upperLeft.Y += p.squareSize {
+	a := 0
+	for upperLeft.X = p.inputImage.Bounds().Min.X; upperLeft.X+p.squareSize < p.inputImage.Bounds().Max.X; upperLeft.X += p.squareSize {
+		b := 0
+		for upperLeft.Y = p.inputImage.Bounds().Min.Y; upperLeft.Y+p.squareSize < p.inputImage.Bounds().Max.Y; upperLeft.Y += p.squareSize {
 			for x := upperLeft.X; x < upperLeft.X+p.squareSize; x++ {
 				for y := upperLeft.Y; y < upperLeft.Y+p.squareSize; y++ {
 					subsection[x%p.squareSize][y%p.squareSize] = p.inputImage.At(x, y)
 				}
 			}
 			closestEmoji := p.nearestSimple(subsection)
-			resultMap.Mapping[upperLeft.X/emojiSize][upperLeft.Y/emojiSize] = closestEmoji
+			//fmt.Printf("a = %d, b = %d\n", a, b)
+			resultMap.Mapping[a][b] = closestEmoji
+			b++
 		}
 		fmt.Print(upperLeft.X)
 		fmt.Print("out of ")
 		fmt.Println(p.inputImage.Bounds().Max.X)
+		a++
 	}
 
 	for i := 0; i < width; i++ {
