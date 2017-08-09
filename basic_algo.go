@@ -152,7 +152,9 @@ func (p picToEmoji) basicAlgoGenMap() *emojiMap {
 			}
 			closestEmoji := p.nearestSimple(subsection)
 			//fmt.Printf("a = %d, b = %d\n", a, b)
-			resultMap.Mapping[a][b] = closestEmoji
+			//reversed the order or index of "a" and "b" because images were coming out rotated
+			//don't want to bother coming up with a more "thought out" solution
+			resultMap.Mapping[b][a] = closestEmoji
 			b++
 		}
 		fmt.Print(upperLeft.X)
