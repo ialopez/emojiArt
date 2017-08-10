@@ -11,25 +11,6 @@ import (
 	"strconv"
 )
 
-/*this Dictionary holds the precomputed average RGB values of Emojis
-it is a map that takes in the platform as a key ie.. "apple" "facebook" and returns a [][3] slice of floats
-where [][0] is red [][1] is green and [][2] is blue
-*/
-
-func InitEmojiDictAvg() {
-	emojiDictAvg = make(map[string][][3]float64)
-	for i := 0; i < len(platforms); i++ {
-		emojiDictAvg[platforms[i]] = make([][3]float64, len(emojiDict[platforms[i]]))
-		for j := 0; j < len(emojiDict[platforms[i]]); j++ {
-			r, g, b := averageRGBArray(emojiDict[platforms[i]][j].vectorForm, 0, 0, 64)
-			emojiDictAvg[platforms[i]][j][0] = r
-			emojiDictAvg[platforms[i]][j][1] = g
-			emojiDictAvg[platforms[i]][j][2] = b
-		}
-	}
-	fmt.Println("average emoji dict initialized")
-}
-
 //test this
 func (p picToEmoji) nearestSimple(subsection [][]color.Color) int {
 
@@ -89,8 +70,8 @@ func (p picToEmoji) basicAlgo() image.Image {
 					subsection[x%p.squareSize][y%p.squareSize] = p.inputImage.At(x, y)
 				}
 			}
-			closestEmoji := p.nearestSimple(subsection)
-			p.drawEmoji(closestEmoji)
+			//closestEmoji := p.nearestSimple(subsection)
+			//p.drawEmoji(closestEmoji)
 		}
 		fmt.Print(upperLeft.X)
 		fmt.Print("out of ")
@@ -152,8 +133,7 @@ func (p picToEmoji) basicAlgoGenMap() *emojiMap {
 			}
 			closestEmoji := p.nearestSimple(subsection)
 			//fmt.Printf("a = %d, b = %d\n", a, b)
-			//reversed the order or index of "a" and "b" because images were coming out rotated
-			//don't want to bother coming up with a more "thought out" solution
+			//reversed the order of indexes "a" and "b" because images were coming out rotated
 			resultMap.Mapping[b][a] = closestEmoji
 			b++
 		}
@@ -167,7 +147,7 @@ func (p picToEmoji) basicAlgoGenMap() *emojiMap {
 		for j := 0; j < height; j++ {
 			key := strconv.Itoa(resultMap.Mapping[i][j])
 			if _, contains := resultMap.Dictionary[key]; !contains {
-				resultMap.Dictionary[key] = emojiDict[p.outputPlatform][resultMap.Mapping[i][j]].urlpath
+				resultMap.Dictionary[key] = emojiURLPath[p.outputPlatform][resultMap.Mapping[i][j]]
 			}
 		}
 	}

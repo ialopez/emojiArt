@@ -15,6 +15,7 @@ each key is the platform the emojis belong to ie. apple, facebook
 var emojiDict map[string][]emoji
 var emojiDictAvg map[string][][3]float64
 var platforms = [6]string{"apple", "emojione", "facebook", "facebook-messenger", "google", "twitter"}
+var emojiURLPath map[string][]string
 
 const emojiSize = 64
 
@@ -58,9 +59,15 @@ func newEmojiMap(width, height int) *emojiMap {
 	return e
 }
 
-//This builds an array of emoji structs that represents every png file in the 64x64 directory
-func InitEmojiDict() {
-	emojiDict = make(map[string][]emoji)
+/*this Dictionary holds the precomputed average RGB values of Emojis
+it is a map that takes in the platform as a key ie.. "apple" "facebook" and returns a [][3] slice of floats
+where [][0] is red [][1] is green and [][2] is blue
+*/
+
+func InitEmojiDictAvg() {
+	//emojiDict = make(map[string][]emoji)
+	emojiURLPath = make(map[string][]string)
+	emojiDictAvg = make(map[string][][3]float64)
 
 	for i := 0; i < len(platforms); i++ {
 		currentDir := "../emojiart/" + platforms[i] + "/"
@@ -70,13 +77,17 @@ func InitEmojiDict() {
 		}
 		defer folder.Close()
 
-		//read up to 3000 png files from the directory "64x64"
+		//read up to 3000 png files from the current folder
 		names, err := folder.Readdirnames(3000)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		emojiDict[platforms[i]] = make([]emoji, len(names))
+		emojiURLPath[platforms[i]] = make([]string, len(names))
+		emojiDictAvg[platforms[i]] = make([][3]float64, len(names))
+		//emojiDict[platforms[i]] = make([]emoji, len(names))
+
+		var currentEmoji [emojiSize][emojiSize]color.Color
 
 		for j := 0; j < len(names); j++ {
 			file, err := os.Open(currentDir + names[j])
@@ -84,31 +95,24 @@ func InitEmojiDict() {
 				log.Fatal(err)
 			}
 			img, err := png.Decode(file)
+			file.Close()
 			if err != nil {
 				log.Fatal(err)
 			}
-			emojiDict[platforms[i]][j].urlpath = "/images/" + platforms[i] + "/" + names[j]
+			emojiURLPath[platforms[i]][j] = "/images/" + platforms[i] + "/" + names[j]
 
 			size := img.Bounds()
-
-			whiteColor := color.NRGBA{R: uint8(255), G: uint8(255), B: uint8(255), A: uint8(255)}
 
 			//store vector form for emojis
 			for x := size.Min.X; x < size.Max.X; x++ {
 				for y := size.Min.Y; y < size.Max.Y; y++ {
-					//check if pixel is transparent if it is set it to white
-					//pixel := img.At(x, y)
-					//_, _, _, a := pixel.RGBA()
-					//debug
-					if 1 == 0 {
-						//if color is transparent set color to white
-						emojiDict[platforms[i]][j].vectorForm[x][y] = whiteColor
-					} else {
-						emojiDict[platforms[i]][j].vectorForm[x][y] = img.At(x, y)
-					}
+					currentEmoji[x][y] = img.At(x, y)
 				}
 			}
-			file.Close()
+			r, g, b := averageRGBArray(currentEmoji, 0, 0, emojiSize)
+			emojiDictAvg[platforms[i]][j][0] = r
+			emojiDictAvg[platforms[i]][j][1] = g
+			emojiDictAvg[platforms[i]][j][2] = b
 		}
 	}
 	fmt.Println("emoji dict initialized")
@@ -118,6 +122,7 @@ func InitEmojiDict() {
 emojiIndex: the index of a emoji in emojiDict
 img: the image to draw onto
 */
+/*
 func (p *picToEmoji) drawEmoji(emojiIndex int) {
 	for x := 0; x < emojiSize; x++ {
 		for y := 0; y < emojiSize; y++ {
@@ -131,6 +136,7 @@ func (p *picToEmoji) drawEmoji(emojiIndex int) {
 		p.currentSquare.X += emojiSize
 	}
 }
+*/
 
 /*finds the average rgb value of a specified sub square of the image
 subsection: an image
