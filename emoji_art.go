@@ -52,9 +52,9 @@ func NewPicToEmoji(squareSize int, outputPlatform string, useAdvancedAlgo bool, 
 func newEmojiMap(width, height int) *emojiMap {
 	e := new(emojiMap)
 	e.Dictionary = make(map[string]string)
-	e.Mapping = make([][]int, width)
-	for i := 0; i < width; i++ {
-		e.Mapping[i] = make([]int, height)
+	e.Mapping = make([][]int, height)
+	for i := 0; i < height; i++ {
+		e.Mapping[i] = make([]int, width)
 	}
 	return e
 }
