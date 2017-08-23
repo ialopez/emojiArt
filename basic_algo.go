@@ -11,17 +11,14 @@ import (
 	"strconv"
 )
 
-//test this
-func (p picToEmoji) nearestSimple(subsection [][]color.Color) int {
-
+func (p picToEmoji) nearestSimple(subsection imageSlice) int {
 	var smallestDistance float64
 	var nearestIndex int
 	var distance float64
 
 	//set smallest distance to first emoji
-	r0, g0, b0 := averageRGBSlice(subsection, 0, 0, p.squareSize)
+	r0, g0, b0 := subsection.averageRGB(0, 0, p.squareSize, false)
 	r1, g1, b1 := emojiDictAvg[p.outputPlatform][0][0], emojiDictAvg[p.outputPlatform][0][1], emojiDictAvg[p.outputPlatform][0][2]
-	//r1, g1, b1 := averageRGBArray(emojiDict[0].vectorForm, 0, 0, 64)
 
 	//use sum of square differences
 	smallestDistance = math.Pow(r0-r1, 2) + math.Pow(g0-g1, 2) + math.Pow(b0-b1, 2)
@@ -29,7 +26,6 @@ func (p picToEmoji) nearestSimple(subsection [][]color.Color) int {
 
 	for i := 1; i < len(emojiDictAvg[p.outputPlatform]); i++ {
 		r1, g1, b1 := emojiDictAvg[p.outputPlatform][i][0], emojiDictAvg[p.outputPlatform][i][1], emojiDictAvg[p.outputPlatform][i][2]
-		//r1, g1, b1 := averageRGBArray(emojiDict[i].vectorForm, 0, 0, 64)
 		distance = math.Pow(r0-r1, 2) + math.Pow(g0-g1, 2) + math.Pow(b0-b1, 2)
 		if distance < smallestDistance {
 			smallestDistance = distance
@@ -116,11 +112,6 @@ func (p picToEmoji) basicAlgoGenMap() *emojiMap {
 	}
 
 	var upperLeft image.Point
-	/*
-		fmt.Printf("width is %d, height is %d\n", width, height)
-		fmt.Printf("imgWidth is %d, imgHeight is %d\n", imgWidth, imgHeight)
-		fmt.Print("max x is %d, max y is %d\n", p.inputImage.Bounds().Max.X, p.inputImage.Bounds().Max.Y)
-	*/
 
 	a := 0
 	for upperLeft.X = p.inputImage.Bounds().Min.X; upperLeft.X+p.squareSize < p.inputImage.Bounds().Max.X; upperLeft.X += p.squareSize {
@@ -143,6 +134,7 @@ func (p picToEmoji) basicAlgoGenMap() *emojiMap {
 		a++
 	}
 
+	//create dictionary with the URL paths of all the emojis used in resultMap.Mapping
 	for i := 0; i < height; i++ {
 		for j := 0; j < width; j++ {
 			key := strconv.Itoa(resultMap.Mapping[i][j])
