@@ -1,10 +1,12 @@
 package emojiart
 
 import (
+	"encoding/json"
 	"fmt"
 	"image"
 	"image/color"
 	"image/png"
+	"io/ioutil"
 	"log"
 	"os"
 )
@@ -13,9 +15,14 @@ var emojiDictAvg map[string][][3]float64
 var platforms = [6]string{"apple", "emojione", "facebook", "facebook-messenger", "google", "twitter"}
 var emojiURLPath map[string][]string
 
-const emojiSize = 64
+const (
+	EMOJI_SIZE              = 64
+	EMOJI_DICT_JSON_LOC     = "../emojiart/emojiDict.json"
+	EMOJI_URL_PATH_JSON_LOC = "../emojiart/emojiURLPath.json"
+	MAX_FILE_SIZE_BYTES     = 700000
+)
 
-type emojiImage [emojiSize][emojiSize]color.Color
+type emojiImage [EMOJI_SIZE][EMOJI_SIZE]color.Color
 type imageSlice [][]color.Color
 
 type picToEmoji struct {
@@ -54,7 +61,27 @@ func newEmojiMap(width, height int) *emojiMap {
 it is a map that takes in the platform as a key ie.. "apple" "facebook" and returns a [][3] slice of floats
 where [][0] is red [][1] is green and [][2] is blue
 */
-func InitEmojiDictAvg() {
+func InitEmojiDictAvg(recalculateEmojiDict bool) {
+
+	//read previously saved emoji dict from json files
+	if !recalculateEmojiDict {
+		buffer, err := ioutil.ReadFile(EMOJI_URL_PATH_JSON_LOC)
+		if err == nil {
+			err = json.Unmarshal(buffer, &emojiURLPath)
+			if err == nil {
+				buffer, err = ioutil.ReadFile(EMOJI_DICT_JSON_LOC)
+				if err == nil {
+					err = json.Unmarshal(buffer, &emojiDictAvg)
+					if err == nil {
+						fmt.Println("emoji dict initialized from json")
+						return
+					}
+				}
+			}
+		}
+	}
+
+	//if recalculateEmojiDict is true or an error occured above make dictionary from scratch
 	//emojiDict = make(map[string][]emoji)
 	emojiURLPath = make(map[string][]string)
 	emojiDictAvg = make(map[string][][3]float64)
@@ -99,13 +126,14 @@ func InitEmojiDictAvg() {
 					currentEmoji[x][y] = img.At(x, y)
 				}
 			}
-			r, g, b := currentEmoji.averageRGB(0, 0, emojiSize, false)
+			r, g, b := currentEmoji.averageRGB(0, 0, EMOJI_SIZE, false)
 			emojiDictAvg[platforms[i]][j][0] = r
 			emojiDictAvg[platforms[i]][j][1] = g
 			emojiDictAvg[platforms[i]][j][2] = b
 		}
 	}
-	fmt.Println("emoji dict initialized")
+	outputEmojiDictJSON()
+	fmt.Println("emoji dict initialized from scratch")
 }
 
 /*finds the average rgb value of a specified sub square of the image
@@ -190,6 +218,25 @@ func (p picToEmoji) DrawInputImage() {
 	}
 
 	fmt.Println("finished")
+}
+
+//outputs emojiDictAvg and emojiURLPath to json file
+func outputEmojiDictJSON() {
+	output, _ := json.Marshal(emojiDictAvg)
+	file, err := os.Create(EMOJI_DICT_JSON_LOC)
+	if err != nil {
+		return
+	}
+	defer file.Close()
+	file.Write(output)
+
+	output, _ = json.Marshal(emojiURLPath)
+	file, err = os.Create(EMOJI_URL_PATH_JSON_LOC)
+	if err != nil {
+		return
+	}
+	defer file.Close()
+	file.Write(output)
 }
 
 func (p picToEmoji) CreateEmojiArtMap() *emojiMap {

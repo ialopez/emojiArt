@@ -47,8 +47,8 @@ func (p picToEmoji) basicAlgo() image.Image {
 
 	imgWidth := p.inputImage.Bounds().Max.X - p.inputImage.Bounds().Min.X
 	imgHeight := p.inputImage.Bounds().Max.Y - p.inputImage.Bounds().Min.X
-	p.resultWidth = emojiSize * imgWidth / p.squareSize
-	p.resultHeight = emojiSize * imgHeight / p.squareSize
+	p.resultWidth = EMOJI_SIZE * imgWidth / p.squareSize
+	p.resultHeight = EMOJI_SIZE * imgHeight / p.squareSize
 	p.outputImage = image.NewRGBA(image.Rect(0, 0, p.resultWidth, p.resultHeight))
 
 	//create 2d slice
