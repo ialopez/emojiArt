@@ -128,9 +128,6 @@ func (p picToEmoji) basicAlgoGenMap() *emojiMap {
 			resultMap.Mapping[b][a] = closestEmoji
 			b++
 		}
-		fmt.Print(upperLeft.X)
-		fmt.Print("out of ")
-		fmt.Println(p.inputImage.Bounds().Max.X)
 		a++
 	}
 
