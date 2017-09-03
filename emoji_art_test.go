@@ -13,6 +13,8 @@ func TestAverageRGBSlice(t *testing.T) {
 }
 
 func BenchmarkCreateEmojiMap(b *testing.B) {
+	InitNumOfThreads()
+
 	file, _ := os.Open("../emojiart/obama.png")
 	img, _, _ := image.Decode(file)
 	picToEmoji := NewPicToEmoji(22, "apple", img)

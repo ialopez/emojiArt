@@ -9,6 +9,7 @@ import (
 	"math"
 	"os"
 	"strconv"
+	"sync"
 )
 
 func (p picToEmoji) nearestSimple(subsection imageSlice) int {
@@ -98,6 +99,7 @@ func (p picToEmoji) basicAlgo() image.Image {
 /*similar to function above instead returns a struct containing a compressed representation of the emojiArt image
  */
 func (p picToEmoji) basicAlgoGenMap() *emojiMap {
+
 	imgWidth := p.inputImage.Bounds().Max.X - p.inputImage.Bounds().Min.X
 	imgHeight := p.inputImage.Bounds().Max.Y - p.inputImage.Bounds().Min.X
 	width := imgWidth / p.squareSize
@@ -105,31 +107,64 @@ func (p picToEmoji) basicAlgoGenMap() *emojiMap {
 
 	resultMap := newEmojiMap(width, height)
 
-	//create 2d slice
-	subsection := make([][]color.Color, p.squareSize)
-	for i := 0; i < p.squareSize; i++ {
-		subsection[i] = make([]color.Color, p.squareSize)
-	}
+	/*image is divided into slices based on number of threads being used like so
+	each . is a pixel and = represents a border
+	.....................
+	.....................
+	=====================
+	.....................
+	.....................
+	=====================
+	.....................
+	.....................
 
-	var upperLeft image.Point
+	each slice has its output calculated on its on thread
+	*/
 
-	a := 0
-	for upperLeft.X = p.inputImage.Bounds().Min.X; upperLeft.X+p.squareSize < p.inputImage.Bounds().Max.X; upperLeft.X += p.squareSize {
-		b := 0
-		for upperLeft.Y = p.inputImage.Bounds().Min.Y; upperLeft.Y+p.squareSize < p.inputImage.Bounds().Max.Y; upperLeft.Y += p.squareSize {
-			for x := upperLeft.X; x < upperLeft.X+p.squareSize; x++ {
-				for y := upperLeft.Y; y < upperLeft.Y+p.squareSize; y++ {
-					subsection[x%p.squareSize][y%p.squareSize] = p.inputImage.At(x, y)
-				}
-			}
-			closestEmoji := p.nearestSimple(subsection)
-			//fmt.Printf("a = %d, b = %d\n", a, b)
-			//reversed the order of indexes "a" and "b" because images were coming out rotated
-			resultMap.Mapping[b][a] = closestEmoji
-			b++
+	heightPerSection := (height / NUM_OF_THREADS) * p.squareSize //pixel height of each section
+
+	var wg sync.WaitGroup
+	for lowBoundY := p.inputImage.Bounds().Min.Y; lowBoundY < p.inputImage.Bounds().Max.Y; lowBoundY += heightPerSection {
+		wg.Add(1)
+		minY := lowBoundY
+		initA := lowBoundY / p.squareSize
+		var maxY int
+		if lowBoundY+heightPerSection > p.inputImage.Bounds().Max.Y {
+			//case where there is left over section in the image that has a smaller height than heightPerSection
+			maxY = p.inputImage.Bounds().Max.Y
+		} else {
+			maxY = lowBoundY + heightPerSection
 		}
-		a++
+
+		go func(minY, maxY, initA int, p *picToEmoji, wg *sync.WaitGroup) {
+			var upperLeft image.Point
+			//create 2d slice
+			subsection := make([][]color.Color, p.squareSize)
+			for i := 0; i < p.squareSize; i++ {
+				subsection[i] = make([]color.Color, p.squareSize)
+			}
+
+			a := initA
+			//divide image into blocks and find the nearest emoji for each block
+			for upperLeft.Y = minY; upperLeft.Y+p.squareSize <= maxY; upperLeft.Y += p.squareSize {
+				b := 0
+				for upperLeft.X = p.inputImage.Bounds().Min.X; upperLeft.X+p.squareSize <= p.inputImage.Bounds().Max.X; upperLeft.X += p.squareSize {
+					for y := upperLeft.Y; y < upperLeft.Y+p.squareSize; y++ {
+						for x := upperLeft.X; x < upperLeft.X+p.squareSize; x++ {
+							subsection[y%p.squareSize][x%p.squareSize] = p.inputImage.At(x, y)
+						}
+					}
+					closestEmoji := (*p).nearestSimple(subsection)
+					resultMap.Mapping[a][b] = closestEmoji
+					b++
+				}
+				a++
+			}
+			(*wg).Done()
+		}(minY, maxY, initA, &p, &wg)
 	}
+
+	wg.Wait() //function waits here until all goroutines are finished
 
 	//create dictionary with the URL paths of all the emojis used in resultMap.Mapping
 	for i := 0; i < height; i++ {

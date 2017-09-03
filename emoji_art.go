@@ -9,11 +9,15 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"runtime"
 )
 
-var emojiDictAvg map[string][][3]float64
-var platforms = [6]string{"apple", "emojione", "facebook", "facebook-messenger", "google", "twitter"}
-var emojiURLPath map[string][]string
+var (
+	emojiDictAvg   map[string][][3]float64
+	platforms      = [6]string{"apple", "emojione", "facebook", "facebook-messenger", "google", "twitter"}
+	emojiURLPath   map[string][]string
+	NUM_OF_THREADS int
+)
 
 const (
 	EMOJI_SIZE              = 64
@@ -198,6 +202,11 @@ func (s *emojiImage) averageRGB(x int, y int, squareSize int, ignoreTransparentP
 		b = float64(b0) / float64(count)
 	}
 	return
+}
+
+func InitNumOfThreads() {
+	NUM_OF_THREADS = runtime.NumCPU() + 1
+	runtime.GOMAXPROCS(NUM_OF_THREADS - 1)
 }
 
 //debug purposes
