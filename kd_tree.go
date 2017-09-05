@@ -110,22 +110,26 @@ func nearestNeighbor(r, g, b float64, key int, node *Tree) (smallestDistance flo
 		case 0:
 			if r < (*node).R {
 				smallestDistance, URLIndex = nearestNeighbor(r, g, b, nextKey, (*node).Left)
+				isLeftOfPlane = true
 			} else {
 				smallestDistance, URLIndex = nearestNeighbor(r, g, b, nextKey, (*node).Right)
+				isLeftOfPlane = false
 			}
 		case 1:
-			nextKey = (nextKey + 1) % 3
 			if g < (*node).G {
 				smallestDistance, URLIndex = nearestNeighbor(r, g, b, nextKey, (*node).Left)
+				isLeftOfPlane = true
 			} else {
 				smallestDistance, URLIndex = nearestNeighbor(r, g, b, nextKey, (*node).Right)
+				isLeftOfPlane = false
 			}
 		case 2:
-			nextKey = (nextKey + 1) % 3
 			if b < (*node).B {
 				smallestDistance, URLIndex = nearestNeighbor(r, g, b, nextKey, (*node).Left)
+				isLeftOfPlane = true
 			} else {
 				smallestDistance, URLIndex = nearestNeighbor(r, g, b, nextKey, (*node).Right)
+				isLeftOfPlane = false
 			}
 		}
 

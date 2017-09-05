@@ -162,7 +162,7 @@ func (p picToEmoji) basicAlgoGenMap() *emojiMap {
 							subsection[y%p.squareSize][x%p.squareSize] = p.inputImage.At(x, y)
 						}
 					}
-					closestEmoji := (*p).nearestSimple(subsection)
+					closestEmoji := (*p).nearestSimpleTree(subsection)
 					resultMap.Mapping[a][b] = closestEmoji
 					b++
 				}
