@@ -1,17 +1,19 @@
 package emojiart
 
 import (
-	"encoding/json"
 	"math"
 	"sort"
 )
 
 type Tree struct {
-	R, G, B  float64
-	URLIndex int
+	R, G, B  float64 //average rgb
+	URLIndex int     //references index in emojiURLPath
 	Left     *Tree
 	Right    *Tree
 }
+
+/*interfaces and methods needed by sort
+ */
 
 type ByRed []Emoji
 type ByGreen []Emoji
@@ -95,13 +97,15 @@ func BuildTree(platform string, low, high, key int) *Tree {
 	}
 }
 
+/*uses kdTree to find nearestNeighbor in log(n) time
+ */
 func nearestNeighbor(r, g, b float64, key int, node *Tree) (smallestDistance float64, URLIndex int) {
 	//base case
 	if node == nil {
 		smallestDistance, URLIndex = -1, -1
 		return //smallestDistance and URLIndex cannot be negative, check for -1 in recursive step
 	} else {
-		//smallest distance is set to recursive value from recursive call, this value is the squared euclidean distance
+		//smallest distance is set to value from recursive call, this value is the squared euclidean distance
 		//take the square root if you want the actual distance
 
 		var isLeftOfPlane bool //used to tell if point r, g ,b is left of the plane created by the current node
@@ -135,7 +139,7 @@ func nearestNeighbor(r, g, b float64, key int, node *Tree) (smallestDistance flo
 
 		distanceToThisNode := math.Pow(r-(*node).R, 2) + math.Pow(g-(*node).G, 2) + math.Pow(b-(*node).B, 2)
 
-		//check if value in smallest distance is -1 if it then we are at a left node
+		//check if value in smallest distance is -1, if it is then we
 		//set smallest distance to distance from the current node
 		if smallestDistance == -1 {
 			smallestDistance, URLIndex = distanceToThisNode, (*node).URLIndex
@@ -194,23 +198,4 @@ func nearestNeighbor(r, g, b float64, key int, node *Tree) (smallestDistance flo
 		}
 		return
 	}
-}
-
-func treeJSON() (output []byte, err error) {
-	root := new(Tree)
-	t1 := new(Tree)
-	t2 := new(Tree)
-	t3 := new(Tree)
-
-	root.R = 1.3
-	root.G = 2.0
-	root.B = 3.7
-
-	root.Left = t1
-	t1.Left = t2
-	t1.Right = t3
-
-	output, err = json.Marshal(root)
-
-	return output, err
 }

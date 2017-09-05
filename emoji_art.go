@@ -21,9 +21,8 @@ var (
 
 const (
 	EMOJI_SIZE              = 64
-	EMOJI_DICT_JSON_LOC     = "../emojiart/emojiDict.json"
+	KD_TREE_JSON_LOC        = "../emojiart/kdTree.json"
 	EMOJI_URL_PATH_JSON_LOC = "../emojiart/emojiURLPath.json"
-	MAX_FILE_SIZE_BYTES     = 700000
 )
 
 type emojiImage [EMOJI_SIZE][EMOJI_SIZE]color.Color
@@ -66,11 +65,11 @@ func newEmojiMap(width, height int) *emojiMap {
 	return e
 }
 
-/*this Dictionary holds the precomputed average RGB values of Emojis
-it is a map that takes in the platform as a key ie.. "apple" "facebook" and returns a [][3] slice of floats
-where [][0] is red [][1] is green and [][2] is blue
+/*this builds emojiDictAvg(holds the average rgb values of emoji images) and emojiURLPath(holds the url addresses to images on server)
+emojiDictAvg is then uses to build the kdTree and is freed once its built
+this function can also rebuild emojiURLPath and kdTree from a json file if they were previously saved
 */
-func InitEmojiDictAvg(recalculateEmojiDict bool) {
+func InitDataStructs(recalculateEmojiDict bool) {
 
 	//read previously saved emoji dict from json files
 	if !recalculateEmojiDict {
@@ -78,11 +77,11 @@ func InitEmojiDictAvg(recalculateEmojiDict bool) {
 		if err == nil {
 			err = json.Unmarshal(buffer, &emojiURLPath)
 			if err == nil {
-				buffer, err = ioutil.ReadFile(EMOJI_DICT_JSON_LOC)
+				buffer, err := ioutil.ReadFile(KD_TREE_JSON_LOC)
 				if err == nil {
-					err = json.Unmarshal(buffer, &emojiDictAvg)
+					err = json.Unmarshal(buffer, &kdTree)
 					if err == nil {
-						fmt.Println("emoji dict initialized from json")
+						fmt.Println("kd tree initialized from json")
 						return
 					}
 				}
@@ -142,11 +141,16 @@ func InitEmojiDictAvg(recalculateEmojiDict bool) {
 			emojiDictAvg[platforms[i]][j].B = b
 		}
 	}
+
 	for i := 0; i < len(platforms); i++ {
 		kdTree[platforms[i]] = BuildTree(platforms[i], 0, len(emojiDictAvg[platforms[i]])-1, 0)
 	}
 
-	fmt.Println("emoji dict initialized from scratch")
+	emojiDictAvg = nil //we can free emojiDictavg once the kdtree is built
+
+	outputDataStructsJSON()
+
+	fmt.Println("kd tree initialized from scratch")
 }
 
 /*finds the average rgb value of a specified sub square of the image
@@ -238,16 +242,23 @@ func (p picToEmoji) DrawInputImage() {
 	fmt.Println("finished")
 }
 
-//outputs emojiDictAvg and emojiURLPath to json file
-func outputEmojiDictJSON() {
-	output, _ := json.Marshal(emojiDictAvg)
-	file, err := os.Create(EMOJI_DICT_JSON_LOC)
+//outputs kdTree and emojiURLPath to json file
+func outputDataStructsJSON() {
+	output, _ := json.Marshal(kdTree)
+	file, err := os.Create(KD_TREE_JSON_LOC)
 	if err != nil {
 		return
 	}
 	defer file.Close()
 	file.Write(output)
 
+	output, _ = json.Marshal(&emojiURLPath)
+	file, err = os.Create(EMOJI_URL_PATH_JSON_LOC)
+	if err != nil {
+		return
+	}
+	defer file.Close()
+	file.Write(output)
 }
 
 func (p picToEmoji) CreateEmojiArtMap() *emojiMap {

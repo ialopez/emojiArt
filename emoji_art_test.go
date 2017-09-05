@@ -18,5 +18,7 @@ func BenchmarkCreateEmojiMap(b *testing.B) {
 	img, _, _ := image.Decode(file)
 	picToEmoji := NewPicToEmoji(22, "apple", img)
 	b.ResetTimer()
-	picToEmoji.CreateEmojiArtMap()
+	for i := 0; i < b.N; i++ {
+		picToEmoji.CreateEmojiArtMap()
+	}
 }
