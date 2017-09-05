@@ -19,20 +19,28 @@ func (p picToEmoji) nearestSimple(subsection imageSlice) int {
 
 	//set smallest distance to first emoji
 	r0, g0, b0 := subsection.averageRGB(0, 0, p.squareSize, false)
-	r1, g1, b1 := emojiDictAvg[p.outputPlatform][0][0], emojiDictAvg[p.outputPlatform][0][1], emojiDictAvg[p.outputPlatform][0][2]
+	r1, g1, b1 := emojiDictAvg[p.outputPlatform][0].R, emojiDictAvg[p.outputPlatform][0].G, emojiDictAvg[p.outputPlatform][0].B
 
 	//use sum of square differences
 	smallestDistance = math.Pow(r0-r1, 2) + math.Pow(g0-g1, 2) + math.Pow(b0-b1, 2)
-	nearestIndex = 0
+	nearestIndex = emojiDictAvg[p.outputPlatform][0].URLIndex
 
 	for i := 1; i < len(emojiDictAvg[p.outputPlatform]); i++ {
-		r1, g1, b1 := emojiDictAvg[p.outputPlatform][i][0], emojiDictAvg[p.outputPlatform][i][1], emojiDictAvg[p.outputPlatform][i][2]
+		r1, g1, b1 := emojiDictAvg[p.outputPlatform][i].R, emojiDictAvg[p.outputPlatform][i].G, emojiDictAvg[p.outputPlatform][i].B
 		distance = math.Pow(r0-r1, 2) + math.Pow(g0-g1, 2) + math.Pow(b0-b1, 2)
 		if distance < smallestDistance {
 			smallestDistance = distance
-			nearestIndex = i
+			nearestIndex = emojiDictAvg[p.outputPlatform][i].URLIndex
 		}
 	}
+
+	return nearestIndex
+}
+
+func (p picToEmoji) nearestSimpleTree(subsection imageSlice) int {
+	r0, g0, b0 := subsection.averageRGB(0, 0, p.squareSize, false)
+	//set smallest distance to first emoji
+	_, nearestIndex := nearestNeighbor(r0, g0, b0, 0, kdTree[p.outputPlatform])
 
 	return nearestIndex
 }
@@ -171,7 +179,8 @@ func (p picToEmoji) basicAlgoGenMap() *emojiMap {
 		for j := 0; j < width; j++ {
 			key := strconv.Itoa(resultMap.Mapping[i][j])
 			if _, contains := resultMap.Dictionary[key]; !contains {
-				resultMap.Dictionary[key] = emojiURLPath[p.outputPlatform][resultMap.Mapping[i][j]]
+				urlPath := emojiURLPath[p.outputPlatform][resultMap.Mapping[i][j]]
+				resultMap.Dictionary[key] = urlPath
 			}
 		}
 	}

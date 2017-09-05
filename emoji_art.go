@@ -13,9 +13,9 @@ import (
 )
 
 var (
-	emojiDictAvg   map[string][][3]float64
-	platforms      = [6]string{"apple", "emojione", "facebook", "facebook-messenger", "google", "twitter"}
+	emojiDictAvg   map[string][]Emoji
 	emojiURLPath   map[string][]string
+	platforms      = [6]string{"apple", "emojione", "facebook", "facebook-messenger", "google", "twitter"}
 	NUM_OF_THREADS int
 )
 
@@ -28,6 +28,11 @@ const (
 
 type emojiImage [EMOJI_SIZE][EMOJI_SIZE]color.Color
 type imageSlice [][]color.Color
+
+type Emoji struct {
+	R, G, B  float64
+	URLIndex int
+}
 
 type picToEmoji struct {
 	squareSize, resultWidth, resultHeight int
@@ -87,8 +92,9 @@ func InitEmojiDictAvg(recalculateEmojiDict bool) {
 
 	//if recalculateEmojiDict is true or an error occured above make dictionary from scratch
 	//emojiDict = make(map[string][]emoji)
+	emojiDictAvg = make(map[string][]Emoji)
 	emojiURLPath = make(map[string][]string)
-	emojiDictAvg = make(map[string][][3]float64)
+	kdTree = make(map[string]*Tree)
 
 	for i := 0; i < len(platforms); i++ {
 		currentDir := "../emojiart/" + platforms[i] + "/"
@@ -104,9 +110,8 @@ func InitEmojiDictAvg(recalculateEmojiDict bool) {
 			log.Fatal(err)
 		}
 
+		emojiDictAvg[platforms[i]] = make([]Emoji, len(names))
 		emojiURLPath[platforms[i]] = make([]string, len(names))
-		emojiDictAvg[platforms[i]] = make([][3]float64, len(names))
-		//emojiDict[platforms[i]] = make([]emoji, len(names))
 
 		var currentEmoji emojiImage
 
@@ -120,6 +125,7 @@ func InitEmojiDictAvg(recalculateEmojiDict bool) {
 			if err != nil {
 				log.Fatal(err)
 			}
+			emojiDictAvg[platforms[i]][j].URLIndex = j
 			emojiURLPath[platforms[i]][j] = "/images/" + platforms[i] + "/" + names[j]
 
 			size := img.Bounds()
@@ -131,12 +137,15 @@ func InitEmojiDictAvg(recalculateEmojiDict bool) {
 				}
 			}
 			r, g, b := currentEmoji.averageRGB(0, 0, EMOJI_SIZE, false)
-			emojiDictAvg[platforms[i]][j][0] = r
-			emojiDictAvg[platforms[i]][j][1] = g
-			emojiDictAvg[platforms[i]][j][2] = b
+			emojiDictAvg[platforms[i]][j].R = r
+			emojiDictAvg[platforms[i]][j].G = g
+			emojiDictAvg[platforms[i]][j].B = b
 		}
 	}
-	outputEmojiDictJSON()
+	for i := 0; i < len(platforms); i++ {
+		kdTree[platforms[i]] = BuildTree(platforms[i], 0, len(emojiDictAvg[platforms[i]])-1, 0)
+	}
+
 	fmt.Println("emoji dict initialized from scratch")
 }
 
@@ -239,13 +248,6 @@ func outputEmojiDictJSON() {
 	defer file.Close()
 	file.Write(output)
 
-	output, _ = json.Marshal(emojiURLPath)
-	file, err = os.Create(EMOJI_URL_PATH_JSON_LOC)
-	if err != nil {
-		return
-	}
-	defer file.Close()
-	file.Write(output)
 }
 
 func (p picToEmoji) CreateEmojiArtMap() *emojiMap {

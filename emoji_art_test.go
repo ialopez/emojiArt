@@ -6,7 +6,7 @@ import "os"
 import _ "image/png"
 
 func TestInitEmojiDict(t *testing.T) {
-	InitEmojiDictAvg(false)
+	InitEmojiDictAvg(true)
 }
 
 func TestAverageRGBSlice(t *testing.T) {
