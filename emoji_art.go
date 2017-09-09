@@ -41,7 +41,8 @@ type picToEmoji struct {
 	currentSquare                         image.Point
 }
 
-type emojiMap struct {
+//is exported because it structs with its type are returned in CreateEmojiArtMap()
+type EmojiMap struct {
 	Dictionary map[string]string `json:"dictionary"`
 	Mapping    [][]int           `json:"mapping"`
 }
@@ -55,8 +56,8 @@ func NewPicToEmoji(squareSize int, outputPlatform string, inputImage image.Image
 	return p
 }
 
-func newEmojiMap(width, height int) *emojiMap {
-	e := new(emojiMap)
+func newEmojiMap(width, height int) *EmojiMap {
+	e := new(EmojiMap)
 	e.Dictionary = make(map[string]string)
 	e.Mapping = make([][]int, height)
 	for i := 0; i < height; i++ {
@@ -261,6 +262,6 @@ func outputDataStructsJSON() {
 	file.Write(output)
 }
 
-func (p picToEmoji) CreateEmojiArtMap() *emojiMap {
+func (p picToEmoji) CreateEmojiArtMap() *EmojiMap {
 	return p.basicAlgoGenMap()
 }

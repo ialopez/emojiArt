@@ -19,7 +19,7 @@ func nearestEmoji(subsection imageSlice, platform string) int {
 
 /*similar to function above instead returns a struct containing a compressed representation of the emojiArt image
  */
-func (p picToEmoji) basicAlgoGenMap() *emojiMap {
+func (p picToEmoji) basicAlgoGenMap() *EmojiMap {
 
 	imgWidth := p.inputImage.Bounds().Max.X - p.inputImage.Bounds().Min.X
 	imgHeight := p.inputImage.Bounds().Max.Y - p.inputImage.Bounds().Min.X
